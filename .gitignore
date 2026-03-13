@@ -1,0 +1,34 @@
+# =========================
+# Infraestructura (Mosquitto)
+# =========================
+# Ignorar bases de datos y logs, pero mantener las carpetas
+mosquitto/data/*
+mosquitto/log/*
+!mosquitto/data/.gitkeep
+!mosquitto/log/.gitkeep
+
+# =========================
+# Python (Backend y Consumer)
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+env/
+
+# =========================
+# Frontend (React/Node)
+# =========================
+node_modules/
+build/
+dist/
+.env.local
+
+# =========================
+# Bases de datos y SO
+# =========================
+*.db
+*.sqlite3
+.DS_Store

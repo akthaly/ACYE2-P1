@@ -1,0 +1,60 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: park_broker
+    ports:
+      - "1883:1883" # Este es el puerto estandar MQTT para una raspberry y el backend
+      - "9001:9001" # Este es el puesto Websocket para el frontend en tiempo real
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    networks:
+      - park_network
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:latest
+    container_name: park_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db # Volumen para persistencia de datos
+    networks:
+      - park_network
+    restart: unless-stopped
+
+  consumer:
+    build: ./consumer                   # Le dice a Docker que busque el Dockerfile en esa carpeta
+    container_name: park_consumer
+    depends_on:                         # Espera a que estos dos arranquen primero
+      - mosquitto
+      - mongodb
+    environment:                        # Variables de entorno que lee tu main.py
+      - MQTT_HOST=park_broker
+      - MONGO_HOST=park_db
+    networks:
+      - park_network
+    restart: unless-stopped
+  
+  backend:
+      build: ./backend
+      container_name: park_backend
+      ports:
+        - "5000:5000"                     # Expone el puerto 5000 para acceder al API desde el host
+      depends_on:
+        - mongodb                         # Espera a que la BD esté lista
+      environment:
+        - MONGO_HOST=park_db          
+      networks:
+        - park_network
+      restart: unless-stopped
+
+# Esto permite que los contenedores se comuniquen entre sí a través de la red definida
+networks:
+  park_network:
+    driver: bridge # esto significa que los contenedores estarán en la misma red y podrán comunicarse entre sí usando los nombres de los servicios como hostnames
+
+# Volumen para MongoDB
+volumes:
+  mongodb_data:
